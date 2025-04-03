@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Auth.OAuth2;
+using dotenv.net;
 namespace BaseballTournyScheduler
 {
     public class TournyScheduler
@@ -17,14 +18,18 @@ namespace BaseballTournyScheduler
 
         static void Main()
         {
-            string googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
-            string googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+            string projectRoot = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName;
+            string envPath = Path.Combine(projectRoot, ".env");
+            DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { envPath }, ignoreExceptions: false));
+            
+            string googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID", EnvironmentVariableTarget.Process);
+            string googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET", EnvironmentVariableTarget.Process);
             string[] scopes = new[] { Google.Apis.Sheets.v4.SheetsService.Scope.Spreadsheets };
             
             UserCredential credential = Login(googleClientId, googleClientSecret, scopes);
             IGoogleSheetTournyScheduler sheetManager = new GoogleSheetTournyScheduler(credential);
             
-            var mySpreadSheetId = Environment.GetEnvironmentVariable("MY_SPREADSHEET_ID");
+            var mySpreadSheetId = Environment.GetEnvironmentVariable("SPREADSHEET_ID", EnvironmentVariableTarget.Process);
             var spreadSheet = sheetManager.GetSpreadsheet(mySpreadSheetId);
             
             var teams = sheetManager.GetMultipleValues(mySpreadSheetId, new [] {"A2:A20"});
